@@ -1,7 +1,7 @@
 const express = require('express');
 const CryptoJS = require('crypto-js');
 const bodyParser = require('body-parser');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const app = express();
 
 app.use(express.json());
