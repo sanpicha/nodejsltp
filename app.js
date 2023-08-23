@@ -1,24 +1,8 @@
 const express = require('express');
 const CryptoJS = require('crypto-js');
 const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
 const app = express();
-var mysql = require('mysql');
-var conexion= mysql.createConnection({
-    host : 'localhost',
-    database : 'pruebaexpress',
-    user : 'root',
-    password : '',
-});
-
-conexion.connect(function(err) {
-    if (err) {
-        console.error('Error de conexion: ' + err.stack);
-        return;
-    }
-    console.log('Conectado con el identificador ' + conexion.threadId);
-});
-
-
 
 app.use(express.json());
 app.use(express.urlencoded());
@@ -28,7 +12,7 @@ app.use(express.static('public'));
 function generarToken(){
   const app_code = 'PMTZ-BANKTRS-COP-SERVER';
   const app_key = 'O7XKNGWzQCqFJsNaUTj2DqRB7xJNZm';
-  const timestamp = Math.floor((new Date().getTime()) / 1000);
+  const timestamp = Math.floor((new Date().getTime()) / 1000)+93;
   const key_time = app_key + timestamp;
   const uniq_token = CryptoJS.SHA256(key_time);
   const str_union = `${app_code};${timestamp};${uniq_token}`;
