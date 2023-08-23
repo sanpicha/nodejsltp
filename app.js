@@ -16,7 +16,7 @@ function generarToken(){
   const key_time = app_key + timestamp;
   const uniq_token = CryptoJS.SHA256(key_time);
   const str_union = `${app_code};${timestamp};${uniq_token}`;
-  const token = btoa(str_union);
+  const token = Buffer.from(str_union).toString('base64');
   return token;
 }
 
