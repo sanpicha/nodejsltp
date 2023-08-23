@@ -3,22 +3,12 @@ const CryptoJS = require('crypto-js');
 const bodyParser = require('body-parser');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const app = express();
+const https = require('https');
 
 app.use(express.json());
 app.use(express.urlencoded());
 
 app.use(express.static('public'));
-
-function generarToken(){
-  const app_code = 'PMTZ-BANKTRS-COP-SERVER';
-  const app_key = 'O7XKNGWzQCqFJsNaUTj2DqRB7xJNZm';
-  const timestamp = Math.floor((new Date().getTime()) / 1000)+93;
-  const key_time = app_key + timestamp;
-  const uniq_token = CryptoJS.SHA256(key_time);
-  const str_union = `${app_code};${timestamp};${uniq_token}`;
-  const token = Buffer.from(str_union).toString('base64');
-  return token;
-}
 
 app.get('/', (req,res)=>{
   res.sendFile(__dirname + '/public/index.html');
@@ -30,6 +20,21 @@ const currentDayOfMonth = currentDate.getDate();
 const currentMonth = currentDate.getMonth();
 const currentYear = currentDate.getFullYear();
 const dateString = currentYear + "-" +(currentMonth + 1) + "-" + currentDayOfMonth;
+
+const agent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
+fetch('https://worldtimeapi.org/api/ip', { agent })
+      .then(response => response.json())
+      .then(data => {
+        var timestamp = data.unixtime;
+        const app_code = 'PMTZ-BANKTRS-COP-SERVER';
+        const app_key = 'O7XKNGWzQCqFJsNaUTj2DqRB7xJNZm';
+        const key_time = app_key + timestamp;
+        const uniq_token = CryptoJS.SHA256(key_time);
+        const str_union = `${app_code};${timestamp};${uniq_token}`;
+        const token = Buffer.from(str_union).toString('base64');
 
 var jsonEnvio ={
     "user": {
@@ -59,7 +64,7 @@ var jsonEnvio ={
     }
   };
   fetch('https://noccapi-stg.paymentez.com/linktopay/init_order/', 
-  {method: 'POST', body: JSON.stringify(jsonEnvio),headers:{'Content-Type':'application/json','auth-token':generarToken() }}) 
+  {method: 'POST', body: JSON.stringify(jsonEnvio),headers:{'Content-Type':'application/json','auth-token':token}}) 
     .then(response => response.json())
     .then(datos => {
       
@@ -68,9 +73,15 @@ var jsonEnvio ={
     })
     .catch(error => {
       console.log(error);
-      res.status(500).json({ error: 'Error al consumir la API externa' });
+      res.status(500).json({ error: 'Error al consumir la API externa'});
+    });
+  })
+    .catch(error => {
+      console.error('Error al obtener la hora: ', error);
     });
 });
+
+
 
 const fecha = new Date();
 const timestamp = `${fecha.getFullYear()}${padZero(fecha.getMonth() + 1)}${padZero(fecha.getDate())}${padZero(fecha.getHours())}${padZero(fecha.getMinutes())}${padZero(fecha.getSeconds())}`;
